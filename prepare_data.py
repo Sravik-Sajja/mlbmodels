@@ -56,7 +56,7 @@ def get_prepared_data():
     return df, feature_cols
 
 
-def get_balanced_split(df, feature_cols, target_col='num_bases', test_size=0.2):
+def get_weighted_split(df, feature_cols, target_col='num_bases', test_size=0.2):
     #Split data, compute class weights, scale features, and return tensors
     x = df[feature_cols].values.astype(np.float32)
     y = df[target_col].values
@@ -94,4 +94,4 @@ def get_balanced_split(df, feature_cols, target_col='num_bases', test_size=0.2):
         y_train_t = torch.tensor(y_train, dtype=torch.long)
         y_test_t = torch.tensor(y_test, dtype=torch.long)
 
-    return x_train_t, x_test_t, y_train_t, y_test_t, class_weights
+    return x_train_t, x_test_t, y_train_t, y_test_t, class_weights, scaler, x_train, x_test, y_train, y_test
