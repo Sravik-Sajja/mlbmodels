@@ -9,7 +9,7 @@ from sklearn.utils.class_weight import compute_class_weight
 
 def get_prepared_data():
     # Fetch data
-    df = statcast(start_dt='2025-03-26', end_dt='2025-09-29')
+    df = statcast(start_dt='2025-09-26', end_dt='2025-09-29')
     df = df[df['description'] == 'hit_into_play'].copy()
 
     # Game state features
@@ -20,29 +20,19 @@ def get_prepared_data():
     df['p_throws_left'] = (df['p_throws'] == 'L').astype(int)
     df['same_hand'] = (df['stand'] == df['p_throws']).astype(int)
 
+    df['if_fielding_alignment'] = df['if_fielding_alignment'].fillna('Standard')
+    df['of_fielding_alignment'] = df['of_fielding_alignment'].fillna('Standard')
+    if_dummies = pd.get_dummies(df['if_fielding_alignment'], prefix='if_align')
+    of_dummies = pd.get_dummies(df['of_fielding_alignment'], prefix='of_align')
+    df = pd.concat([df, if_dummies, of_dummies], axis=1)
+
     # Featured columns
     feature_cols = [
-        'release_speed',
-        'release_spin_rate',
-        'release_extension',
-        'release_pos_x',
-        'release_pos_z',
-        'pfx_x',
-        'pfx_z',
-        'plate_x',
-        'plate_z',
-        'effective_speed',
-        'launch_speed',
+        'hc_x', 
+        'hc_y', 
+        'hit_distance_sc', 
+        'launch_speed', 
         'launch_angle',
-        'b_hits_left',
-        'p_throws_left',
-        'same_hand',
-        'runner_on_1b',
-        'runner_on_2b',
-        'runner_on_3b',
-        'outs_when_up',
-        'balls',
-        'strikes',
     ]
 
     for col in feature_cols:
