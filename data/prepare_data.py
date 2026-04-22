@@ -9,7 +9,7 @@ from sklearn.utils.class_weight import compute_class_weight
 
 def get_prepared_data():
     # Fetch data
-    df = statcast(start_dt='2025-09-26', end_dt='2025-09-29')
+    df = statcast(start_dt='2025-03-26', end_dt='2025-09-29')
     df = df[df['description'] == 'hit_into_play'].copy()
 
     # Game state features
@@ -63,6 +63,7 @@ def get_weighted_split(df, feature_cols, target_col='num_bases', test_size=0.2):
             classes=classes,
             y=y_train
         )
+        class_weights = np.cbrt(class_weights)
         class_weights = torch.tensor(class_weights, dtype=torch.float32)
     else:
         pos_weight = (y_train == 0).sum() / max((y_train == 1).sum(), 1)

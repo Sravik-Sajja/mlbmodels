@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hit Outcome Predictor</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green: #00c46a;
+    --red: #ff3b3b;
+    --amber: #f5a623;
+    --bg: #0d0f0e;
+    --surface: #161a18;
+    --border: #2a2e2c;
+    --text: #e8ede9;
+    --muted: #6b7570;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 3rem 1.5rem;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3rem, 8vw, 6rem);
+    letter-spacing: 0.04em;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  h1 span { color: var(--green); }
+
+  .subtitle {
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 0.5rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 560px;
+  }
+
+  .fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .field.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  input[type="number"] {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.95rem;
+    padding: 0.6rem 0.8rem;
+    width: 100%;
+    transition: border-color 0.15s;
+    -moz-appearance: textfield;
+  }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+  input[type="number"]:focus {
+    outline: none;
+    border-color: var(--green);
+  }
+
+  button {
+    width: 100%;
+    background: var(--green);
+    color: #0d0f0e;
+    border: none;
+    border-radius: 6px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.08em;
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  button:hover { opacity: 0.88; }
+  button:active { transform: scale(0.98); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .results {
+    margin-top: 2rem;
+    display: none;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .results.visible { display: flex; }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+  }
+
+  .hit-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .hit-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .hit-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    line-height: 1;
+  }
+
+  .hit-value.green { color: var(--green); }
+  .hit-value.red { color: var(--red); }
+
+  .bar-wrap {
+    height: 6px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: var(--green);
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0%;
+  }
+
+  .breakdown-title {
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .breakdown-rows { display: flex; flex-direction: column; gap: 0.6rem; }
+
+  .b-row {
+    display: grid;
+    grid-template-columns: 60px 1fr 44px;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .b-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .b-pct {
+    font-size: 0.85rem;
+    text-align: right;
+    color: var(--text);
+  }
+
+  .b-bar { background: var(--border); border-radius: 99px; height: 4px; overflow: hidden; }
+  .b-fill { height: 100%; border-radius: 99px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); width: 0%; }
+
+  .single-fill { background: var(--green); }
+  .double-fill { background: var(--amber); }
+  .triple-fill { background: #a78bfa; }
+  .hr-fill { background: var(--red); }
+
+  .error-msg {
+    font-size: 0.8rem;
+    color: var(--red);
+    text-align: center;
+    display: none;
+  }
+
+  .error-msg.visible { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>HIT <span>ORACLE</span></h1>
+  <p class="subtitle">MLB Statcast · Neural Net Prediction</p>
+</header>
+
+<div class="card">
+  <div class="fields">
+    <div class="field">
+      <label>Hit coord X (hc_x)</label>
+      <input type="number" id="hc_x" placeholder="e.g. 120" step="0.1">
+    </div>
+    <div class="field">
+      <label>Hit coord Y (hc_y)</label>
+      <input type="number" id="hc_y" placeholder="e.g. 165" step="0.1">
+    </div>
+    <div class="field">
+      <label>Hit distance (ft)</label>
+      <input type="number" id="hit_distance_sc" placeholder="e.g. 280" step="0.1">
+    </div>
+    <div class="field">
+      <label>Exit velocity (mph)</label>
+      <input type="number" id="launch_speed" placeholder="e.g. 95.2" step="0.1">
+    </div>
+    <div class="field full">
+      <label>Launch angle (°)</label>
+      <input type="number" id="launch_angle" placeholder="e.g. 18.5" step="0.1">
+    </div>
+  </div>
+
+  <button id="predict-btn" onclick="predict()">Predict outcome</button>
+  <p class="error-msg" id="error-msg">Could not reach server. Make sure server.py is running on port 5000.</p>
+
+  <div class="results" id="results">
+    <div class="divider"></div>
+
+    <div class="hit-row">
+      <div>
+        <p class="hit-label">Hit probability</p>
+        <p class="hit-value green" id="hit-pct">—</p>
+      </div>
+      <div style="text-align:right">
+        <p class="hit-label">Out probability</p>
+        <p class="hit-value red" id="out-pct">—</p>
+      </div>
+    </div>
+
+    <div class="bar-wrap">
+      <div class="bar-fill" id="hit-bar"></div>
+    </div>
+
+    <div>
+      <p class="breakdown-title">If a hit — outcome breakdown</p>
+      <div class="breakdown-rows" id="breakdown-rows"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function predict() {
+  const fields = ['hc_x', 'hc_y', 'hit_distance_sc', 'launch_speed', 'launch_angle'];
+  const data = {};
+
+  for (const f of fields) {
+    const val = document.getElementById(f).value;
+    if (val === '') {
+      showError('Please fill in all fields.');
+      return;
+    }
+    data[f] = parseFloat(val);
+  }
+
+  const btn = document.getElementById('predict-btn');
+  btn.disabled = true;
+  btn.textContent = 'Predicting...';
+  hideError();
+
+  try {
+    const res = await fetch('http://localhost:5000/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      showError(err.error || 'Server error.');
+      return;
+    }
+
+    const result = await res.json();
+    renderResults(result);
+  } catch (e) {
+    showError('Could not reach server. Make sure server.py is running on port 5000.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Predict outcome';
+  }
+}
+
+const COLOR_MAP = {
+  Single: 'single-fill',
+  Double: 'double-fill',
+  Triple: 'triple-fill',
+  HR: 'hr-fill',
+};
+
+function renderResults(result) {
+  document.getElementById('hit-pct').textContent = result.hit_probability + '%';
+  document.getElementById('out-pct').textContent = result.out_probability + '%';
+
+  setTimeout(() => {
+    document.getElementById('hit-bar').style.width = result.hit_probability + '%';
+  }, 50);
+
+  const container = document.getElementById('breakdown-rows');
+  container.innerHTML = '';
+
+  const breakdown = result.bases_breakdown;
+  const total = Object.values(breakdown).reduce((a, b) => a + b, 0);
+  const max = Math.max(...Object.values(breakdown));
+
+  const BASE_ORDER = ['Single', 'Double', 'Triple', 'HR'];
+
+  for (const label of BASE_ORDER) {
+    if (!(label in breakdown)) continue;
+    const pct = Math.round((breakdown[label] / total) * 1000) / 10;
+    const colorClass = COLOR_MAP[label] || 'single-fill';
+    const row = document.createElement('div');
+    row.className = 'b-row';
+    row.innerHTML = `
+      <span class="b-label">${label}</span>
+      <div class="b-bar"><div class="b-fill ${colorClass}" data-pct="${pct}" data-max="${max}"></div></div>
+      <span class="b-pct">${pct}%</span>
+    `;
+    container.appendChild(row);
+  }
+
+  setTimeout(() => {
+    document.querySelectorAll('.b-fill').forEach(el => {
+      el.style.width = (parseFloat(el.dataset.pct) / parseFloat(el.dataset.max) * 100) + '%';
+    });
+  }, 50);
+
+  document.getElementById('results').classList.add('visible');
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg;
+  el.classList.add('visible');
+}
+
+function hideError() {
+  document.getElementById('error-msg').classList.remove('visible');
+}
+</script>
+</body>
+</html>

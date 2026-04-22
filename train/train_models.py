@@ -7,6 +7,8 @@ from torch.utils.data import DataLoader, TensorDataset
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from xgboost import XGBClassifier 
 
+import sys
+sys.path.append('../data')
 from prepare_data import get_prepared_data, get_weighted_split
 from models import HitNN, BasesNN
 from evaluate_models import evaluate_nn_hit_model, evaluate_nn_bases_model, evaluate_xgb_hit_model, evaluate_xgb_bases_model, print_comparison
