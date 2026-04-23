@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hit Oracle</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <h1>HIT <span>ORACLE</span></h1>
+  <p class="subtitle">MLB Statcast · Neural Net Prediction</p>
+</header>
+
+<div class="layout">
+
+  <!-- Left: interactive field -->
+  <div class="card field-panel">
+    <p class="card-label">Click field to place hit · or enter coordinates</p>
+    <svg id="field-svg" viewBox="0 0 400 420" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="coord-display">
+      <div class="coord-pill">hc_x <span id="display-x">—</span></div>
+      <div class="coord-pill">hc_y <span id="display-y">—</span></div>
+      <div class="coord-pill">dist <span id="display-dist">—</span> ft</div>
+    </div>
+    <p class="field-hint">Click anywhere on the field to auto-fill coordinates</p>
+    <p class="foul-msg" id="foul-msg">⚠ Foul territory — click within the fair lines</p>
+  </div>
+
+  <!-- Right: inputs + results -->
+  <div class="card">
+    <p class="card-label">Statcast inputs</p>
+    <div class="fields">
+      <div class="field">
+        <label>Hit coord X (hc_x)</label>
+        <input type="number" id="hc_x" placeholder="e.g. 120" step="0.1" oninput="onCoordInput()">
+      </div>
+      <div class="field">
+        <label>Hit coord Y (hc_y)</label>
+        <input type="number" id="hc_y" placeholder="e.g. 165" step="0.1" oninput="onCoordInput()">
+      </div>
+      <div class="field">
+        <label>Hit distance (ft) <span class="auto-label">auto</span></label>
+        <input type="number" id="hit_distance_sc" placeholder="Set by coordinates" step="0.1" class="auto-input" tabindex="-1">
+      </div>
+      <div class="field">
+        <label>Exit velocity (mph)</label>
+        <input type="number" id="launch_speed" placeholder="e.g. 95.2" step="0.1">
+      </div>
+      <div class="field full">
+        <label>Launch angle (°)</label>
+        <input type="number" id="launch_angle" placeholder="e.g. 18.5" step="0.1">
+      </div>
+    </div>
+
+    <button id="predict-btn" onclick="predict()">Predict outcome</button>
+    <p class="error-msg" id="error-msg"></p>
+
+    <div class="results" id="results">
+      <div class="divider"></div>
+      <div class="hit-row">
+        <div>
+          <p class="hit-label">Hit probability</p>
+          <p class="hit-value green" id="hit-pct">—</p>
+        </div>
+        <div style="text-align:right">
+          <p class="hit-label">Out probability</p>
+          <p class="hit-value red" id="out-pct">—</p>
+        </div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-fill" id="hit-bar"></div>
+      </div>
+      <div>
+        <p class="breakdown-title">If a hit — outcome breakdown</p>
+        <div class="breakdown-rows" id="breakdown-rows"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="field.js"></script>
+<script src="predict.js"></script>
+<script>buildField();</script>
+</body>
+</html>

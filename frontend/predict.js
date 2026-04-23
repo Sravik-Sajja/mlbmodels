@@ -1,0 +1,97 @@
+const COLOR_MAP = {
+    Single: 'single-fill',
+    Double: 'double-fill',
+    Triple: 'triple-fill',
+    HR:     'hr-fill',
+  };
+  
+  async function predict() {
+    const fieldIds = ['hc_x', 'hc_y', 'hit_distance_sc', 'launch_speed', 'launch_angle'];
+    const data = {};
+  
+    for (const id of fieldIds) {
+      const val = document.getElementById(id).value;
+      // Add data validation here
+      if (id == 'launch_angle') {
+        if (val>90) { showError('Please enter valid launch angle'); return; }
+      }
+      if (val === '') { showError('Please fill in all fields.'); return; }
+      data[id] = parseFloat(val);
+    }
+  
+    const btn = document.getElementById('predict-btn');
+    btn.disabled    = true;
+    btn.textContent = 'Predicting...';
+    hideError();
+  
+    try {
+      const res = await fetch('http://localhost:5000/predict', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(data),
+      });
+  
+      if (!res.ok) {
+        const err = await res.json();
+        showError(err.error || 'Server error.');
+        return;
+      }
+  
+      renderResults(await res.json());
+    } catch {
+      showError('Could not reach server. Make sure server.py is running on port 5000.');
+    } finally {
+      btn.disabled    = false;
+      btn.textContent = 'Predict outcome';
+    }
+  }
+  
+  function renderResults(result) {
+    document.getElementById('hit-pct').textContent = result.hit_probability + '%';
+    document.getElementById('out-pct').textContent = result.out_probability + '%';
+  
+    setTimeout(() => {
+      document.getElementById('hit-bar').style.width = result.hit_probability + '%';
+    }, 50);
+  
+    const container = document.getElementById('breakdown-rows');
+    container.innerHTML = '';
+  
+    const breakdown = result.bases_breakdown;
+    const total = Object.values(breakdown).reduce((a, b) => a + b, 0);
+    const max   = Math.max(...Object.values(breakdown));
+  
+    for (const label of ['Single', 'Double', 'Triple', 'HR']) {
+      if (!(label in breakdown)) continue;
+      const pct       = Math.round((breakdown[label] / total) * 1000) / 10;
+      const colorClass = COLOR_MAP[label] || 'single-fill';
+      const row = document.createElement('div');
+      row.className = 'b-row';
+      row.innerHTML = `
+        <span class="b-label">${label}</span>
+        <div class="b-bar">
+          <div class="b-fill ${colorClass}" data-pct="${pct}" data-max="${max}"></div>
+        </div>
+        <span class="b-pct">${pct}%</span>
+      `;
+      container.appendChild(row);
+    }
+  
+    setTimeout(() => {
+      document.querySelectorAll('.b-fill').forEach(el => {
+        el.style.width = (parseFloat(el.dataset.pct) / parseFloat(el.dataset.max) * 100) + '%';
+      });
+    }, 50);
+  
+    document.getElementById('results').classList.add('visible');
+  }
+  
+  function showError(msg) {
+    const el = document.getElementById('error-msg');
+    el.textContent = msg;
+    el.classList.add('visible');
+  }
+  
+  function hideError() {
+    document.getElementById('error-msg').classList.remove('visible');
+  }
