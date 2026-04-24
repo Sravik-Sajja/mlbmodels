@@ -29,7 +29,7 @@ CLASS_NAMES = ['Out', 'Single', 'Double', 'Triple', 'HR']
 
 
 @app.route('/predict', methods=['POST'])
-@limiter.limit("15 per minute")
+@limiter.limit("30 per minute")
 def predict():
     data = request.json
     try:

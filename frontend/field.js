@@ -1,6 +1,6 @@
 /* field.js — Baseball field SVG rendering & coordinate mapping */
 
-const SVG_W = 400, SVG_H = 420;
+const SVG_W = 440, SVG_H = 420;
 
 const SC_HOME_X = 125, SC_HOME_Y = 205;
 
@@ -14,7 +14,7 @@ const TRACK_FT = 15;
 
 const PPF      = (HY - 18) / CF_FT;
 const FOUL_ANG = Math.PI / 4;
-const SC_TO_FT = 2.0;
+const SC_TO_FT = 2.37;
 
 function ftToSvg(ftUp, ftRight) {
   return { x: HX + ftRight * PPF, y: HY - ftUp * PPF };

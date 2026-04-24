@@ -19,8 +19,8 @@
 
   <!-- Left: interactive field -->
   <div class="card field-panel">
-    <p class="card-label">Click field to place hit · or enter coordinates</p>
-    <svg id="field-svg" viewBox="0 0 400 420" xmlns="http://www.w3.org/2000/svg"></svg>
+    <p class="card-label">Click where the ball is first touched<br>or enter coordinates</p>
+    <svg id="field-svg" viewBox="0 0 440 420" xmlns="http://www.w3.org/2000/svg"></svg>
     <div class="coord-display">
       <div class="coord-pill">hc_x <span id="display-x">—</span></div>
       <div class="coord-pill">hc_y <span id="display-y">—</span></div>
@@ -35,11 +35,11 @@
     <p class="card-label">Statcast inputs</p>
     <div class="fields">
       <div class="field">
-        <label>Hit coord X (hc_x)</label>
+        <label>Field position X</label>
         <input type="number" id="hc_x" placeholder="e.g. 120" step="0.1" oninput="onCoordInput()">
       </div>
       <div class="field">
-        <label>Hit coord Y (hc_y)</label>
+        <label>Field position Y</label>
         <input type="number" id="hc_y" placeholder="e.g. 165" step="0.1" oninput="onCoordInput()">
       </div>
       <div class="field">
