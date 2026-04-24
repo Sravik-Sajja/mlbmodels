@@ -12,6 +12,7 @@ const COLOR_MAP = {
     for (const id of fieldIds) {
       const val = document.getElementById(id).value;
       // Data validation
+      if (val === '') { showError('Please fill in all fields.'); return; }
       if (id == 'launch_angle') {
         if (val>90 || val<-90) { showError('Please enter valid launch angle'); return; }
       }
