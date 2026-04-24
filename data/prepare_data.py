@@ -30,7 +30,7 @@ def get_prepared_data():
     feature_cols = [
         'hc_x', 
         'hc_y', 
-        'hit_distance_sc', 
+        #'hit_distance_sc', 
         'launch_speed', 
         'launch_angle',
     ]

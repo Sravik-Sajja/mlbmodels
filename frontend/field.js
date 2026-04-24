@@ -184,12 +184,12 @@ function buildField() {
       ${home.x - 6},${home.y - 2}
     " fill="white" opacity="0.9"/>
 
-    <text x="${cf.x}"          y="${cf.y + 16}"     text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="rgba(255,255,255,0.3)" letter-spacing="1">CF</text>
-    <text x="${lfPole.x + 38}" y="${lfPole.y - 8}"  text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="rgba(255,255,255,0.3)" letter-spacing="1">LF</text>
-    <text x="${rfPole.x - 38}" y="${rfPole.y - 8}"  text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="rgba(255,255,255,0.3)" letter-spacing="1">RF</text>
-    <text x="${cf.x}"          y="${cf.y + 28}"     text-anchor="middle" font-family="DM Mono,monospace" font-size="7" fill="rgba(255,255,255,0.2)">400 ft</text>
-    <text x="${lfPole.x + 38}" y="${lfPole.y + 6}"  text-anchor="middle" font-family="DM Mono,monospace" font-size="7" fill="rgba(255,255,255,0.2)">330 ft</text>
-    <text x="${rfPole.x - 38}" y="${rfPole.y + 6}"  text-anchor="middle" font-family="DM Mono,monospace" font-size="7" fill="rgba(255,255,255,0.2)">330 ft</text>
+    <text x="${cf.x}"          y="${cf.y + 16}"     text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="rgba(255,255,255,0.7)" letter-spacing="1">CF</text>
+    <text x="${lfPole.x + 38}" y="${lfPole.y - 8}"  text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="rgba(255,255,255,0.7)" letter-spacing="1">LF</text>
+    <text x="${rfPole.x - 38}" y="${rfPole.y - 8}"  text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="rgba(255,255,255,0.7)" letter-spacing="1">RF</text>
+    <text x="${cf.x}"          y="${cf.y + 28}"     text-anchor="middle" font-family="DM Mono,monospace" font-size="7" fill="rgba(255,255,255,0.6)">400 ft</text>
+    <text x="${lfPole.x + 38}" y="${lfPole.y + 6}"  text-anchor="middle" font-family="DM Mono,monospace" font-size="7" fill="rgba(255,255,255,0.6)">330 ft</text>
+    <text x="${rfPole.x - 38}" y="${rfPole.y + 6}"  text-anchor="middle" font-family="DM Mono,monospace" font-size="7" fill="rgba(255,255,255,0.6)">330 ft</text>
 
     <g id="hit-marker" opacity="0">
       <circle id="hit-ring" cx="0" cy="0" r="11" fill="none" stroke="#00c46a" stroke-width="1.5" opacity="0.5"/>
@@ -211,9 +211,8 @@ function buildField() {
     const sc   = svgToSc(svgX, svgY);
     const dist = scDist(sc.x, sc.y);
 
-    document.getElementById('hc_x').value            = sc.x;
-    document.getElementById('hc_y').value            = sc.y;
-    document.getElementById('hit_distance_sc').value = dist;
+    document.getElementById('hc_x').value = sc.x;
+    document.getElementById('hc_y').value = sc.y;
 
     placeMarker(svgX, svgY);
     refreshPills(sc.x, sc.y, dist);
@@ -251,7 +250,6 @@ function onCoordInput() {
 
   // Either field empty/invalid — clear derived outputs and wait
   if (isNaN(xVal) || isNaN(yVal)) {
-    document.getElementById('hit_distance_sc').value = '';
     document.getElementById('hit-marker').setAttribute('opacity', '0');
     refreshPills('—', '—', '—');
     hideFoulError();
@@ -263,14 +261,12 @@ function onCoordInput() {
   if (!isInFairTerritory(svgPos.x, svgPos.y)) {
     showFoulError();
     document.getElementById('hit-marker').setAttribute('opacity', '0');
-    document.getElementById('hit_distance_sc').value = '';
     refreshPills('—', '—', '—');
     return;
   }
   hideFoulError();
 
   const dist = scDist(xVal, yVal);
-  document.getElementById('hit_distance_sc').value = dist;
   placeMarker(svgPos.x, svgPos.y);
   refreshPills(xVal, yVal, dist);
 }
