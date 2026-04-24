@@ -1,2 +1,5 @@
 __pycache__/
 saved_models
+!train/saved_models/*.json
+.vercel
+.DS_Store

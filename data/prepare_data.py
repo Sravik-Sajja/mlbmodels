@@ -9,7 +9,7 @@ from sklearn.utils.class_weight import compute_class_weight
 
 def get_prepared_data():
     # Fetch data
-    df = statcast(start_dt='2025-03-26', end_dt='2025-09-29')
+    df = statcast(start_dt='2025-06-26', end_dt='2025-09-29')
     df = df[df['description'] == 'hit_into_play'].copy()
 
     # Game state features
