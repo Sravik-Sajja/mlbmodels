@@ -144,7 +144,7 @@ function buildField() {
       </radialGradient>
     </defs>
 
-    <rect width="${SVG_W}" height="${SVG_H}" fill="#0d1a0f"/>
+    <rect x="0" y="-30" width="${SVG_W}" height="${SVG_H + 30}" fill="#0d1a0f"/>
 
     <path d="${grassPath}" fill="url(#grassGrad)" clip-path="url(#fieldClip)"/>
 
