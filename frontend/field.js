@@ -200,7 +200,7 @@ function buildField() {
   svg.addEventListener('click', function(e) {
     const rect = svg.getBoundingClientRect();
     const svgX = (e.clientX - rect.left) * (SVG_W / rect.width);
-    const svgY = (e.clientY - rect.top)  * (SVG_H / rect.height);
+    const svgY = (e.clientY - rect.top)  * (440 / rect.height) - 30;
 
     if (!isInFairTerritory(svgX, svgY)) {
       showFoulError();

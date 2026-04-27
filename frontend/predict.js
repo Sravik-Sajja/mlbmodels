@@ -17,10 +17,10 @@ const COLOR_MAP = {
         if (val>90 || val<-90) { showError('Please enter valid launch angle'); return; }
       }
       if (id == 'hc_x') {
-        if (val<25 || val>224) { showError('Please enter valid hc_x'); return; }
+        if (val<24 || val>225) { showError('Please enter valid field position x'); return; }
       }
       if (id == 'hc_y') {
-        if (val<25 || val>205) { showError('Please enter valid hc_y'); return; }
+        if (val<10 || val>205) { showError('Please enter valid field position y'); return; }
       }
       if (id == 'launch_speed') {
         if (val<1 || val>130) { showError('Please enter valid exit velocity'); return; }
