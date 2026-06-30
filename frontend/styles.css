@@ -279,3 +279,90 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 }
 
 .coord-pill span { color: var(--text); }
+
+/* ── Live plays panel ── */
+.live-panel {
+  grid-column: 1 / -1;
+  margin-top: 1.5rem;
+}
+
+.day-scroller {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  scrollbar-width: thin;
+}
+
+.day-pill {
+  flex: 0 0 auto;
+  width: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.72rem;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.day-pill:hover { border-color: var(--green); opacity: 1; }
+.day-pill.active { background: var(--green); color: #0d0f0e; border-color: var(--green); font-weight: 600; }
+
+.live-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 700px) {
+  .live-columns { grid-template-columns: 1fr; }
+}
+
+.games-list, .plays-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.live-hint {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.live-hint.error { color: var(--red); }
+
+.game-row, .play-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.55rem 0.75rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: normal;
+  letter-spacing: normal;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s;
+}
+
+.game-row:hover, .play-row:hover { border-color: var(--green); opacity: 1; }
+.game-row.active, .play-row.active { border-color: var(--green); background: rgba(0, 196, 106, 0.08); }
+
+.game-status { color: var(--muted); font-size: 0.68rem; }
+.play-batter { font-weight: 600; }
+.play-event { color: var(--muted); flex: 1; text-align: center; }
+.play-inning { color: var(--muted); font-size: 0.7rem; }

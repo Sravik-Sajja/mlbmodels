@@ -78,10 +78,28 @@
     </div>
   </div>
 
+  <!-- Full width: pull a real play from the last 30 days -->
+  <div class="card live-panel">
+    <p class="card-label">Pull a real play</p>
+    <div class="day-scroller" id="day-scroller"></div>
+    <div class="live-columns">
+      <div class="games-list" id="games-list">
+        <p class="live-hint">Select a day to see games</p>
+      </div>
+      <div class="plays-list" id="plays-list">
+        <p class="live-hint">Select a game to see batted balls</p>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script src="field.js"></script>
 <script src="predict.js"></script>
-<script>buildField();</script>
+<script src="livefeed.js"></script>
+<script>
+  buildField();
+  initLiveFeed();
+</script>
 </body>
 </html>

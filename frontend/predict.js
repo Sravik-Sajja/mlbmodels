@@ -1,3 +1,5 @@
+const API_BASE = 'http://localhost:5000';
+//const API_BASE = 'https://mlbmodels-production.up.railway.app'
 const COLOR_MAP = {
     Single: 'single-fill',
     Double: 'double-fill',
@@ -34,7 +36,7 @@ const COLOR_MAP = {
     hideError();
 
     try {
-      const res = await fetch('https://mlbmodels-production.up.railway.app/predict', {
+      const res = await fetch(`${API_BASE}/predict`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(data),
