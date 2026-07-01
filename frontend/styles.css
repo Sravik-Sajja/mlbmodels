@@ -45,11 +45,16 @@ h1 span { color: var(--green); }
 /* ── Layout ── */
 .layout {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 1.5rem;
   width: 100%;
-  max-width: 900px;
+  max-width: 1320px;
   align-items: start;
+}
+
+@media (max-width: 1000px) {
+  .layout { grid-template-columns: 1fr 1fr; }
+  .live-panel { grid-column: 1 / -1; }
 }
 
 @media (max-width: 700px) {
@@ -62,6 +67,7 @@ h1 span { color: var(--green); }
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 1.75rem;
+  min-width: 0;
 }
 
 .card-label {
@@ -108,8 +114,6 @@ input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
 
 input[type="number"]:focus { outline: none; border-color: var(--green); }
-
-
 
 /* ── Foul territory warning ── */
 .foul-msg {
@@ -282,9 +286,42 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ── Live plays panel ── */
 .live-panel {
-  grid-column: 1 / -1;
-  margin-top: 1.5rem;
+  min-width: 0;
 }
+
+.live-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.live-panel-header .card-label {
+  margin-bottom: 0;
+  text-align: left;
+}
+
+.back-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.95rem;
+  letter-spacing: 0;
+  padding: 0;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.back-btn.visible { display: flex; }
+.back-btn:hover { border-color: var(--green); color: var(--green); }
 
 .day-scroller {
   display: flex;
@@ -292,8 +329,10 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   overflow-x: auto;
   padding-bottom: 0.75rem;
   margin-bottom: 1rem;
-  scrollbar-width: thin;
+  min-width: 0;
 }
+
+.day-scroller.hidden { display: none; }
 
 .day-pill {
   flex: 0 0 auto;
@@ -313,16 +352,6 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .day-pill:hover { border-color: var(--green); opacity: 1; }
 .day-pill.active { background: var(--green); color: #0d0f0e; border-color: var(--green); font-weight: 600; }
 
-.live-columns {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-
-@media (max-width: 700px) {
-  .live-columns { grid-template-columns: 1fr; }
-}
-
 .games-list, .plays-list {
   display: flex;
   flex-direction: column;
@@ -330,6 +359,8 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   max-height: 280px;
   overflow-y: auto;
 }
+
+.games-list.hidden, .plays-list.hidden { display: none; }
 
 .live-hint {
   font-size: 0.75rem;
@@ -359,10 +390,106 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   transition: border-color 0.15s;
 }
 
+.game-row {
+  display: grid;
+  grid-template-columns: 72px 1fr 96px;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.game-status {
+  color: var(--muted);
+  font-size: 0.68rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.game-teams-compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+}
+
+.at-sign {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.game-score-compact {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+  color: var(--green);
+  flex: 1;
+  text-align: center;
+}
+
 .game-row:hover, .play-row:hover { border-color: var(--green); opacity: 1; }
 .game-row.active, .play-row.active { border-color: var(--green); background: rgba(0, 196, 106, 0.08); }
 
+.team-logo {
+  width: 25px;
+  height: 25px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
 .game-status { color: var(--muted); font-size: 0.68rem; }
-.play-batter { font-weight: 600; }
-.play-event { color: var(--muted); flex: 1; text-align: center; }
-.play-inning { color: var(--muted); font-size: 0.7rem; }
+
+.play-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.play-batter {
+  font-weight: 600;
+  text-align: left;
+}
+
+.play-event {
+  color: var(--muted);
+  text-align: left;
+}
+
+.play-inning {
+  color: var(--muted);
+  font-size: 0.7rem;
+  text-align: right;
+}
+
+/* ── Themed scrollbars ── */
+.day-scroller,
+.games-list,
+.plays-list {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) var(--bg);
+}
+
+.day-scroller::-webkit-scrollbar,
+.games-list::-webkit-scrollbar,
+.plays-list::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.day-scroller::-webkit-scrollbar-track,
+.games-list::-webkit-scrollbar-track,
+.plays-list::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+.day-scroller::-webkit-scrollbar-thumb,
+.games-list::-webkit-scrollbar-thumb,
+.plays-list::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 99px;
+}
+
+.day-scroller::-webkit-scrollbar-thumb:hover,
+.games-list::-webkit-scrollbar-thumb:hover,
+.plays-list::-webkit-scrollbar-thumb:hover {
+  background: var(--green);
+}

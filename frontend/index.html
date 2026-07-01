@@ -12,8 +12,6 @@
 
 <header>
   <h1>HIT <span>ORACLE</span></h1>
-  <p class="subtitle">MLB Statcast</p>
-  <p class="subtitle">Park-neutral · measures true hit quality</p>
 </header>
 
 <div class="layout">
@@ -21,6 +19,7 @@
   <!-- Left: interactive field -->
   <div class="card field-panel">
     <p class="card-label">Click where the ball is first touched</p>
+    <p class="card-label">Park-neutral</p>
     <svg id="field-svg" viewBox="0 -30 440 440" xmlns="http://www.w3.org/2000/svg"></svg>
     <div class="coord-display">
       <div class="coord-pill">hc_x <span id="display-x">—</span></div>
@@ -80,15 +79,16 @@
 
   <!-- Full width: pull a real play from the last 30 days -->
   <div class="card live-panel">
-    <p class="card-label">Pull a real play</p>
+    <div class="live-panel-header">
+      <button class="back-btn" id="back-btn" type="button">←</button>
+      <p class="card-label" id="live-panel-title">Pull a real play</p>
+    </div>
     <div class="day-scroller" id="day-scroller"></div>
-    <div class="live-columns">
-      <div class="games-list" id="games-list">
-        <p class="live-hint">Select a day to see games</p>
-      </div>
-      <div class="plays-list" id="plays-list">
-        <p class="live-hint">Select a game to see batted balls</p>
-      </div>
+    <div class="games-list" id="games-list">
+      <p class="live-hint">Select a day to see games</p>
+    </div>
+    <div class="plays-list hidden" id="plays-list">
+      <p class="live-hint">Select a game to see batted balls</p>
     </div>
   </div>
 
