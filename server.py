@@ -67,7 +67,7 @@ def predict():
 
 
 @app.route('/games', methods=['GET'])
-@limiter.limit("60 per minute")
+@limiter.limit("30 per minute")
 def get_games_for_date():
     date = request.args.get('date')
     if not date:
@@ -80,7 +80,7 @@ def get_games_for_date():
     try:
         resp = requests.get(
             f"{MLB_API}/schedule",
-            params={'sportId': 1, 'date': date},
+            params={'sportId': 1, 'date': date, 'hydrate': 'linescore'},
             timeout=10,
         )
         resp.raise_for_status()
@@ -91,16 +91,22 @@ def get_games_for_date():
             for g in d.get('games', []):
                 away = g.get('teams', {}).get('away', {})
                 home = g.get('teams', {}).get('home', {})
+                linescore = g.get('linescore', {}) or {}
                 games.append({
                     'gamePk': g.get('gamePk'),
                     'status': g.get('status', {}).get('detailedState'),
+                    'abstractState': g.get('status', {}).get('abstractGameState'),
                     'away': away.get('team', {}).get('name'),
                     'home': home.get('team', {}).get('name'),
                     'awayId': away.get('team', {}).get('id'),
                     'homeId': home.get('team', {}).get('id'),
                     'awayScore': away.get('score'),
                     'homeScore': home.get('score'),
+                    'inning': linescore.get('currentInning'),
+                    'inningHalf': linescore.get('inningState'),
                 })
+        
+        games.sort(key=lambda g: 1 if g['abstractState'] == 'Final' else 0)
  
         _games_cache[date] = (time.time(), games)
         return jsonify({'games': games})
@@ -111,7 +117,7 @@ def get_games_for_date():
 
 
 @app.route('/plays', methods=['GET'])
-@limiter.limit("60 per minute")
+@limiter.limit("30 per minute")
 def get_plays_for_game():
     game_pk = request.args.get('gamePk')
     if not game_pk:
@@ -137,6 +143,10 @@ def get_plays_for_game():
             batter = play.get('matchup', {}).get('batter', {}).get('fullName', 'Unknown')
             result = play.get('result', {})
             about = play.get('about', {})
+            description = (result.get('description') or '')
+
+            if 'foul' in description.lower():
+                continue
 
             for pe in play.get('playEvents', []):
                 hit_data = pe.get('hitData')
@@ -151,7 +161,7 @@ def get_plays_for_game():
                 plays.append({
                     'batter': batter,
                     'event': result.get('event', ''),
-                    'description': result.get('description', ''),
+                    'description': description,
                     'inning': about.get('inning'),
                     'half': about.get('halfInning'),
                     'launch_speed': round(hit_data['launchSpeed'], 1),
