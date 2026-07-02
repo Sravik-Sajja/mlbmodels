@@ -173,7 +173,7 @@ function applyPlay(p, rowEl) {
   document.getElementById('launch_speed').value = p.launch_speed;
   document.getElementById('launch_angle').value = p.launch_angle;
 
-  onCoordInput();
+  onCoordInput(true);
 
   document.querySelectorAll('.play-row').forEach(r => r.classList.remove('active'));
   if (rowEl) rowEl.classList.add('active');

@@ -243,10 +243,8 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 
 #field-svg {
   width: 100%;
-  border-radius: 10px;
   cursor: crosshair;
   display: block;
-  border: 1px solid var(--border);
 }
 
 .field-hint {
