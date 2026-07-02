@@ -1,5 +1,5 @@
-const API_BASE = 'http://localhost:5000';
-//const API_BASE = 'https://mlbmodels-production.up.railway.app'
+//const API_BASE = 'http://localhost:5000';
+const API_BASE = 'https://mlbmodels-production.up.railway.app'
 const COLOR_MAP = {
     Single: 'single-fill',
     Double: 'double-fill',
