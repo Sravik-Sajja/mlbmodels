@@ -1,41 +1,46 @@
-/* field.js — Baseball field SVG rendering & coordinate mapping */
+const PLOT_MAX_FT = 500;   // equidistant outer plot boundary
+const PPF         = 0.78;  // pixels per foot
+const TOP_PAD      = 22;   // room above the arc's apex
+const BOTTOM_PAD   = 30;   // room below home plate for the plate icon
+const SIDE_PAD     = 18;   // room beside the arc's widest points
 
-const SVG_W = 440, SVG_H = 420;
+const PLOT_R = PLOT_MAX_FT * PPF;
+const HY     = TOP_PAD + PLOT_R;
+const SVG_H  = HY + BOTTOM_PAD;
+const HX     = PLOT_R * Math.sin(Math.PI / 4) + SIDE_PAD;
+const SVG_W  = HX * 2;
 
-const SC_HOME_X = 125, SC_HOME_Y = 205;
-
-const HX = SVG_W / 2;
-const HY = SVG_H - 28;
+const SC_HOME_X = 126.3436, SC_HOME_Y = 209.8488;
+const SC_TO_FT_X = 2.301098;
+const SC_TO_FT_Y = 2.299718;
 
 const BASE_FT  = 90;
-const CF_FT    = 400;
-const CORN_FT  = 330;
+const CF_FT    = 400;   // actual CF fence, used for rendering/labels only
+const CORN_FT  = 330;   // actual corner fence, used for rendering/labels only
 const TRACK_FT = 15;
 
-const PPF      = (HY - 18) / CF_FT;
 const FOUL_ANG = Math.PI / 4;
-const SC_TO_FT = 2.37;
 
 function ftToSvg(ftUp, ftRight) {
   return { x: HX + ftRight * PPF, y: HY - ftUp * PPF };
 }
 
 function scToSvg(sc_x, sc_y) {
-  return ftToSvg((SC_HOME_Y - sc_y) * SC_TO_FT, (sc_x - SC_HOME_X) * SC_TO_FT);
+  return ftToSvg((SC_HOME_Y - sc_y) * SC_TO_FT_Y, (sc_x - SC_HOME_X) * SC_TO_FT_X);
 }
 
 function svgToSc(svgX, svgY) {
   const ftRight = (svgX - HX) / PPF;
   const ftUp    = (HY - svgY) / PPF;
   return {
-    x: Math.round((SC_HOME_X + ftRight / SC_TO_FT) * 10) / 10,
-    y: Math.round((SC_HOME_Y - ftUp    / SC_TO_FT) * 10) / 10,
+    x: Math.round((SC_HOME_X + ftRight / SC_TO_FT_X) * 10) / 10,
+    y: Math.round((SC_HOME_Y - ftUp    / SC_TO_FT_Y) * 10) / 10,
   };
 }
 
 function scDist(sc_x, sc_y) {
-  const dx = (sc_x - SC_HOME_X) * SC_TO_FT;
-  const dy = (SC_HOME_Y - sc_y) * SC_TO_FT;
+  const dx = (sc_x - SC_HOME_X) * SC_TO_FT_X;
+  const dy = (SC_HOME_Y - sc_y) * SC_TO_FT_Y;
   return Math.round(Math.sqrt(dx * dx + dy * dy));
 }
 
@@ -51,21 +56,26 @@ function shrink(pt, shrinkFt) {
   return { x: HX + dx * s, y: HY + dy * s };
 }
 
-// Returns true if the SVG point is in fair territory (between foul lines, in front of home)
+// Returns true if the SVG point is in fair territory: between the foul
+// lines, in front of home, and inside the equidistant plot boundary.
 function isInFairTerritory(svgX, svgY) {
-  // Must be above home plate (smaller y = higher on screen)
   if (svgY >= HY) return false;
-  // Vector from home plate
   const dx = svgX - HX;
   const dy = HY - svgY; // positive = upward
   if (dy <= 0) return false;
-  // Angle from vertical: foul lines are at ±45°
   const angle = Math.abs(Math.atan2(dx, dy));
-  return angle <= FOUL_ANG;
+  if (angle > FOUL_ANG) return false;
+  const r = Math.sqrt(dx * dx + dy * dy);
+  return r <= PLOT_R + 0.5; // small epsilon for rounding
 }
 
 function buildField() {
   const svg = document.getElementById('field-svg');
+
+  // Own the aspect ratio directly rather than relying on markup elsewhere
+  // matching these constants exactly.
+  svg.setAttribute('viewBox', `0 0 ${SVG_W} ${SVG_H}`);
+  svg.style.aspectRatio = `${SVG_W} / ${SVG_H}`;
 
   const DIAG   = BASE_FT / Math.SQRT2;
   const home   = { x: HX, y: HY };
@@ -82,15 +92,11 @@ function buildField() {
 
   // Single quadratic bezier per side: control point is on the wall arc
   // midpoint between pole and cf at roughly the right distance.
-  // A point at 45° halfway (22.5°) from vertical at ~355ft looks natural.
   const MID_ANG = Math.PI / 8;   // 22.5° from vertical
   const MID_R   = 355 * PPF;
   const lfMid   = polar(MID_R, -MID_ANG);
   const rfMid   = polar(MID_R,  MID_ANG);
 
-  // For a smooth arc through lfPole, lfMid, cf we need the bezier control point.
-  // Quadratic bezier: B(t) = (1-t)²P0 + 2t(1-t)C + t²P1
-  // At t=0.5: midpoint = 0.25*P0 + 0.5*C + 0.25*P1  →  C = 2*mid - 0.5*(P0+P1)
   const lfCtrl = {
     x: 2 * lfMid.x - 0.5 * (lfPole.x + cf.x),
     y: 2 * lfMid.y - 0.5 * (lfPole.y + cf.y),
@@ -131,9 +137,36 @@ function buildField() {
     `Z`
   ].join(' ');
 
+  // Equidistant plot boundary: the fan/wedge shape the whole panel is
+  // clipped and drawn to. Same pole → mid → apex bezier technique as the
+  // fence above, just at PLOT_R instead of the fence distances, and
+  // closed back to home so it can double as the panel's own background.
+  const plotLeft  = polar(PLOT_R, -FOUL_ANG);
+  const plotRight = polar(PLOT_R,  FOUL_ANG);
+  const plotTop   = polar(PLOT_R,  0);
+  const PLOT_MID_ANG = Math.PI / 8;
+  const plotLeftMid  = polar(PLOT_R, -PLOT_MID_ANG);
+  const plotRightMid = polar(PLOT_R,  PLOT_MID_ANG);
+  const plotLeftCtrl = {
+    x: 2 * plotLeftMid.x - 0.5 * (plotLeft.x + plotTop.x),
+    y: 2 * plotLeftMid.y - 0.5 * (plotLeft.y + plotTop.y),
+  };
+  const plotRightCtrl = {
+    x: 2 * plotRightMid.x - 0.5 * (plotTop.x + plotRight.x),
+    y: 2 * plotRightMid.y - 0.5 * (plotTop.y + plotRight.y),
+  };
+  const fanPath = [
+    `M ${home.x},${home.y}`,
+    `L ${plotLeft.x},${plotLeft.y}`,
+    `Q ${plotLeftCtrl.x},${plotLeftCtrl.y} ${plotTop.x},${plotTop.y}`,
+    `Q ${plotRightCtrl.x},${plotRightCtrl.y} ${plotRight.x},${plotRight.y}`,
+    `L ${home.x},${home.y}`,
+    `Z`
+  ].join(' ');
+
   svg.innerHTML = `
     <defs>
-      <clipPath id="fieldClip"><rect width="${SVG_W}" height="${SVG_H}"/></clipPath>
+      <clipPath id="fieldClip"><path d="${fanPath}"/></clipPath>
       <radialGradient id="grassGrad" cx="50%" cy="100%" r="85%">
         <stop offset="0%" stop-color="#1e4a24"/>
         <stop offset="100%" stop-color="#102214"/>
@@ -144,7 +177,7 @@ function buildField() {
       </radialGradient>
     </defs>
 
-    <rect x="0" y="-30" width="${SVG_W}" height="${SVG_H + 30}" fill="#0d1a0f"/>
+    <path d="${fanPath}" fill="#0d1a0f" stroke="var(--border)" stroke-width="1.5" stroke-linejoin="round"/>
 
     <path d="${grassPath}" fill="url(#grassGrad)" clip-path="url(#fieldClip)"/>
 
@@ -184,12 +217,12 @@ function buildField() {
       ${home.x - 6},${home.y - 2}
     " fill="white" opacity="0.9"/>
 
-    <text x="${cf.x}"          y="${cf.y + 16}"     text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="rgba(255,255,255,0.7)" letter-spacing="1">CF</text>
-    <text x="${lfPole.x + 38}" y="${lfPole.y - 8}"  text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="rgba(255,255,255,0.7)" letter-spacing="1">LF</text>
-    <text x="${rfPole.x - 38}" y="${rfPole.y - 8}"  text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="rgba(255,255,255,0.7)" letter-spacing="1">RF</text>
-    <text x="${cf.x}"          y="${cf.y + 28}"     text-anchor="middle" font-family="DM Mono,monospace" font-size="7" fill="rgba(255,255,255,0.6)">400 ft</text>
-    <text x="${lfPole.x + 38}" y="${lfPole.y + 6}"  text-anchor="middle" font-family="DM Mono,monospace" font-size="7" fill="rgba(255,255,255,0.6)">330 ft</text>
-    <text x="${rfPole.x - 38}" y="${rfPole.y + 6}"  text-anchor="middle" font-family="DM Mono,monospace" font-size="7" fill="rgba(255,255,255,0.6)">330 ft</text>
+    <text x="${cf.x}"          y="${cf.y + 16}"     text-anchor="middle" font-family="DM Mono,monospace" font-size="12" fill="rgba(255,255,255,0.7)" letter-spacing="1">CF</text>
+    <text x="${lfPole.x + 38}" y="${lfPole.y - 8}"  text-anchor="middle" font-family="DM Mono,monospace" font-size="12" fill="rgba(255,255,255,0.7)" letter-spacing="1">LF</text>
+    <text x="${rfPole.x - 38}" y="${rfPole.y - 8}"  text-anchor="middle" font-family="DM Mono,monospace" font-size="12" fill="rgba(255,255,255,0.7)" letter-spacing="1">RF</text>
+    <text x="${cf.x}"          y="${cf.y + 28}"     text-anchor="middle" font-family="DM Mono,monospace" font-size="11" fill="rgba(255,255,255,0.6)">400 ft</text>
+    <text x="${lfPole.x + 38}" y="${lfPole.y + 6}"  text-anchor="middle" font-family="DM Mono,monospace" font-size="11" fill="rgba(255,255,255,0.6)">330 ft</text>
+    <text x="${rfPole.x - 38}" y="${rfPole.y + 6}"  text-anchor="middle" font-family="DM Mono,monospace" font-size="11" fill="rgba(255,255,255,0.6)">330 ft</text>
 
     <g id="hit-marker" opacity="0">
       <circle id="hit-ring" cx="0" cy="0" r="11" fill="none" stroke="#00c46a" stroke-width="1.5" opacity="0.5"/>
@@ -200,7 +233,7 @@ function buildField() {
   svg.addEventListener('click', function(e) {
     const rect = svg.getBoundingClientRect();
     const svgX = (e.clientX - rect.left) * (SVG_W / rect.width);
-    const svgY = (e.clientY - rect.top)  * (440 / rect.height) - 30;
+    const svgY = (e.clientY - rect.top)  * (SVG_H / rect.height);
 
     if (!isInFairTerritory(svgX, svgY)) {
       showFoulError();
@@ -231,7 +264,7 @@ function placeMarker(svgX, svgY) {
 function refreshPills(x, y, dist) {
   document.getElementById('display-x').textContent    = x;
   document.getElementById('display-y').textContent    = y;
-  document.getElementById('display-dist').textContent = dist;
+  document.getElementById('display-dist').textContent = (dist === '—') ? dist : `~${dist}`;
 }
 
 function showFoulError() {
@@ -244,11 +277,10 @@ function hideFoulError() {
   if (el) el.classList.remove('visible');
 }
 
-function onCoordInput() {
+function onCoordInput(bypassFoulCheck = false) {
   const xVal = parseFloat(document.getElementById('hc_x').value);
   const yVal = parseFloat(document.getElementById('hc_y').value);
 
-  // Either field empty/invalid — clear derived outputs and wait
   if (isNaN(xVal) || isNaN(yVal)) {
     document.getElementById('hit-marker').setAttribute('opacity', '0');
     refreshPills('—', '—', '—');
@@ -257,8 +289,9 @@ function onCoordInput() {
   }
 
   const svgPos = scToSvg(xVal, yVal);
+  const inFair = isInFairTerritory(svgPos.x, svgPos.y);
 
-  if (!isInFairTerritory(svgPos.x, svgPos.y)) {
+  if (!inFair && !bypassFoulCheck) {
     showFoulError();
     document.getElementById('hit-marker').setAttribute('opacity', '0');
     refreshPills('—', '—', '—');

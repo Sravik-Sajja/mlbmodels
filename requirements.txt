@@ -4,3 +4,4 @@ flask-limiter
 xgboost
 numpy
 scikit-learn
+requests

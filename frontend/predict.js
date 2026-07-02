@@ -1,3 +1,5 @@
+//const API_BASE = 'http://localhost:5000';
+const API_BASE = 'https://mlbmodels-production.up.railway.app'
 const COLOR_MAP = {
     Single: 'single-fill',
     Double: 'double-fill',
@@ -7,26 +9,28 @@ const COLOR_MAP = {
 
   async function predict() {
     const fieldIds = ['hc_x', 'hc_y', 'launch_speed', 'launch_angle'];
-    const data = {};
+    const raw = {};
 
     for (const id of fieldIds) {
       const val = document.getElementById(id).value;
-      // Data validation
       if (val === '') { showError('Please fill in all fields.'); return; }
-      if (id == 'launch_angle') {
-        if (val>90 || val<-90) { showError('Please enter valid launch angle'); return; }
-      }
-      if (id == 'hc_x') {
-        if (val<24 || val>225) { showError('Please enter valid field position x'); return; }
-      }
-      if (id == 'hc_y') {
-        if (val<10 || val>205) { showError('Please enter valid field position y'); return; }
-      }
-      if (id == 'launch_speed') {
-        if (val<1 || val>130) { showError('Please enter valid exit velocity'); return; }
-      }
-      data[id] = parseFloat(val);
+      raw[id] = parseFloat(val);
     }
+
+    if (raw.launch_angle > 90 || raw.launch_angle < -90) {
+      showError('Please enter valid launch angle'); return;
+    }
+    if (raw.launch_speed < 1 || raw.launch_speed > 130) {
+      showError('Please enter valid exit velocity'); return;
+    }
+
+    const svgPos = scToSvg(raw.hc_x, raw.hc_y);
+    if (!isInFairTerritory(svgPos.x, svgPos.y)) {
+      showError('Field position must be in play.');
+      return;
+    }
+
+    const data = raw;
 
     const btn = document.getElementById('predict-btn');
     btn.disabled    = true;
@@ -34,7 +38,7 @@ const COLOR_MAP = {
     hideError();
 
     try {
-      const res = await fetch('https://mlbmodels-production.up.railway.app/predict', {
+      const res = await fetch(`${API_BASE}/predict`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(data),
