@@ -16,6 +16,8 @@ Given four Statcast inputs — hit coordinates (hc_x, hc_y), exit velocity, and 
 
 The field panel lets you click directly on an SVG baseball diamond to auto-fill coordinates, or enter them manually.
 
+You can also skip manual entry entirely and **pull a real play** from any MLB game in the last 30 days — pick a day, pick a game, pick a batted ball, and its coordinates, exit velocity, and launch angle are loaded straight into the predictor.
+
 ---
 
 ## How it works
@@ -46,6 +48,10 @@ launch_angle  — vertical launch angle (degrees)
 
 Fetched via `pybaseball.statcast()` for the 2025 regular season. Only `hit_into_play` events are used. The `num_bases` label is derived from the `events` column (single=1, double=2, triple=3, home_run=4, otherwise 0).
 
+### Live plays
+
+The "pull a real play" panel talks to the MLB Stats API (`statsapi.mlb.com`). It lists games for a selected day, then batted balls (excluding fouls) for a selected game, pulling exit velocity, launch angle, and hit coordinates straight from each play's `hitData`. Results are cached server-side in memory so concurrent users share requests instead of each hitting the MLB API separately.
+
 ---
 
 ## Project structure
@@ -60,13 +66,14 @@ Fetched via `pybaseball.statcast()` for the 2025 regular season. Only `hit_into_
 │   └── saved_models/         # Trained model files (git-ignored except .json)
 ├── frontend/
 │   ├── index.html            # Main UI
-│   ├── field.js              # SVG baseball field rendering and coordinate mapping
-│   ├── predict.js            # API call and results rendering
-│   └── styles.css            # Styles
-├── server.py                 # Flask API server
+│   ├── field.js               # SVG baseball field rendering and coordinate mapping
+│   ├── predict.js             # API call and results rendering
+│   ├── liveFeed.js            # Day/game/play browser for pulling real batted balls
+│   └── styles.css             # Styles
+├── server.py                  # Flask API server
 ├── requirements.txt
-├── Procfile                  # For Railway deployment
-└── vercel.json               # For Vercel static frontend deployment
+├── Procfile                   # For Railway deployment
+└── vercel.json                # For Vercel static frontend deployment
 ```
 
 ---
@@ -84,7 +91,7 @@ The API runs on `http://localhost:5000`.
 
 **Frontend**
 
-Update the fetch URL in `frontend/predict.js` to point to `http://localhost:5000/predict`, then open `frontend/index.html` in a browser (or serve it with any static server).
+Update `API_BASE` in `frontend/predict.js` to point to `http://localhost:5000`, then open `frontend/index.html` in a browser (or serve it with any static server).
 
 **Retraining**
 
@@ -98,7 +105,7 @@ Trained models are saved to `train/saved_models/`.
 
 ## API
 
-**POST** `/predict`
+### `POST /predict`
 
 ```json
 {
@@ -124,7 +131,59 @@ Trained models are saved to `train/saved_models/`.
 }
 ```
 
-Rate limited to 30 requests/minute
+### `GET /games?date=YYYY-MM-DD`
+
+Returns MLB games scheduled for the given date, sorted so final games appear last.
+
+**Response**
+
+```json
+{
+  "games": [
+    {
+      "gamePk": 745123,
+      "status": "In Progress",
+      "abstractState": "Live",
+      "away": "New York Yankees",
+      "home": "Boston Red Sox",
+      "awayId": 147,
+      "homeId": 111,
+      "awayScore": 3,
+      "homeScore": 2,
+      "inning": 6,
+      "inningHalf": "Bottom"
+    }
+  ]
+}
+```
+
+### `GET /plays?gamePk=<id>`
+
+Returns non-foul batted balls for the given game, with the same fields the predictor expects (`hc_x`, `hc_y`, `launch_speed`, `launch_angle`), plus context like batter, event, inning, and distance.
+
+**Response**
+
+```json
+{
+  "plays": [
+    {
+      "batter": "Aaron Judge",
+      "event": "Home Run",
+      "description": "Aaron Judge homers on a fly ball to right field.",
+      "inning": 4,
+      "half": "top",
+      "launch_speed": 108.3,
+      "launch_angle": 27.1,
+      "distance": 412,
+      "trajectory": "fly_ball",
+      "hc_x": 158.2,
+      "hc_y": 45.6
+    }
+  ]
+}
+```
+
+All three endpoints are rate limited to 50 requests/minute, with a default app-wide limit of 200/hour and 1500/day per client.
 
 ---
 

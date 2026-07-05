@@ -14,7 +14,7 @@ CORS(app)
 limiter = Limiter(
     get_remote_address,
     app=app,
-    default_limits=["200 per day", "50 per hour"],
+    default_limits=["1500 per day", "200 per hour"],
     storage_uri="memory://",
 )
 
@@ -37,13 +37,14 @@ MLB_API_LIVE = 'https://statsapi.mlb.com/api/v1.1'
 _games_cache = {}   # date : (cached_at, games_list)
 _plays_cache = {}   # gamePk : (cached_at, plays_list, game_state)
 
-GAMES_TTL = 60 * 5        # 5 min for game status change
+GAMES_TTL_LIVE  = 60
+GAMES_TTL_FINAL = 60 * 60 * 24
 PLAYS_TTL_LIVE = 30         # 30s — in-progress games get new batted balls
 PLAYS_TTL_FINAL = 60 * 60 * 24  # 24h — finished games' play data never changes
 
 
 @app.route('/predict', methods=['POST'])
-@limiter.limit("30 per minute")
+@limiter.limit("50 per minute")
 def predict():
     data = request.json
     try:
@@ -67,16 +68,19 @@ def predict():
 
 
 @app.route('/games', methods=['GET'])
-@limiter.limit("30 per minute")
+@limiter.limit("50 per minute")
 def get_games_for_date():
     date = request.args.get('date')
     if not date:
         return jsonify({'error': 'date query param is required (YYYY-MM-DD)'}), 400
- 
+
     cached = _games_cache.get(date)
-    if cached and (time.time() - cached[0]) < GAMES_TTL:
-        return jsonify({'games': cached[1]})
- 
+    if cached:
+        cached_at, cached_games, cached_all_final = cached
+        ttl = GAMES_TTL_FINAL if cached_all_final else GAMES_TTL_LIVE
+        if (time.time() - cached_at) < ttl:
+            return jsonify({'games': cached_games})
+
     try:
         resp = requests.get(
             f"{MLB_API}/schedule",
@@ -85,7 +89,7 @@ def get_games_for_date():
         )
         resp.raise_for_status()
         data = resp.json()
- 
+
         games = []
         for d in data.get('dates', []):
             for g in d.get('games', []):
@@ -105,10 +109,11 @@ def get_games_for_date():
                     'inning': linescore.get('currentInning'),
                     'inningHalf': linescore.get('inningState'),
                 })
-        
+
         games.sort(key=lambda g: 1 if g['abstractState'] == 'Final' else 0)
- 
-        _games_cache[date] = (time.time(), games)
+
+        all_final = all(g['abstractState'] == 'Final' for g in games) if games else True
+        _games_cache[date] = (time.time(), games, all_final)
         return jsonify({'games': games})
     except requests.exceptions.RequestException as e:
         return jsonify({'error': f'Could not reach MLB Stats API: {e}'}), 502
@@ -117,7 +122,7 @@ def get_games_for_date():
 
 
 @app.route('/plays', methods=['GET'])
-@limiter.limit("30 per minute")
+@limiter.limit("50 per minute")
 def get_plays_for_game():
     game_pk = request.args.get('gamePk')
     if not game_pk:
@@ -128,6 +133,7 @@ def get_plays_for_game():
         cached_at, cached_plays, cached_state = cached
         ttl = PLAYS_TTL_FINAL if cached_state == 'Final' else PLAYS_TTL_LIVE
         if (time.time() - cached_at) < ttl:
+            print("Returned cache")
             return jsonify({'plays': cached_plays})
 
     try:
